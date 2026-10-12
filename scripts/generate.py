@@ -3,7 +3,7 @@ import numpy as np
 import soundfile as sf
 from kokoro import KPipeline
 
-# Parse arguments cleanly
+# Parse arguments passed from GitHub Actions
 script_path = sys.argv[1] if len(sys.argv) > 1 else "script.txt"
 voice_choice = sys.argv[2] if len(sys.argv) > 2 else "af_bella"
 
@@ -16,7 +16,7 @@ print(f"Generating TTS audio with voice '{voice_choice}'...")
 # Initialize American English pipeline
 pipeline = KPipeline(lang_code='a')
 
-# Generate audio chunks (speed=1.1 for quick YouTube Shorts pacing)
+# Generate audio chunks (speed=1.1 for snappy YouTube Shorts pacing)
 generator = pipeline(text, voice=voice_choice, speed=1.1)
 
 audio_chunks = [chunk for _, _, chunk in generator]
