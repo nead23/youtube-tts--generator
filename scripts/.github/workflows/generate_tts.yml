@@ -1,0 +1,53 @@
+name: Generate Kokoro TTS Audio
+
+on:
+  workflow_dispatch:
+    inputs:
+      voiceover_text:
+        description: 'Paste your video script here'
+        required: true
+        default: 'Check your supplement bottle right now! If it says D2 instead of D3, it might actually be lowering your active Vitamin D levels.'
+      voice_name:
+        description: 'Choose Voice (e.g. af_bella, af_heart, am_adam, am_michael)'
+        required: true
+        default: 'af_bella'
+
+jobs:
+  generate-audio:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install System Dependencies (espeak-ng)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y espeak-ng soundfile-progs
+
+    - name: Install Python Packages
+      run: |
+        python -m pip install --upgrade pip
+        pip install kokoro soundfile numpy torch
+
+    - name: Prepare Input Text
+      run: |
+        cat << 'EOF' > current_script.txt
+        ${{ github.event.inputs.voiceover_text }}
+        EOF
+
+    - name: Run Kokoro TTS Generation
+      run: |
+        python scripts/generate.py current_script.txt "${{ github.event.inputs.voice_name }}"
+
+    - name: Upload Audio Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: youtube-voiceover-wav
+        path: voiceover.wav
+        retention-days: 7
