@@ -4,20 +4,20 @@ on:
   workflow_dispatch:
     inputs:
       voiceover_text:
-        description: 'Paste your video script here'
+        description: 'Paste your YouTube script here'
         required: true
         default: 'Check your supplement bottle right now! If it says D2 instead of D3, it might actually be lowering your active Vitamin D levels.'
       voice_name:
-        description: 'Choose Voice (e.g. af_bella, af_heart, am_adam, am_michael)'
+        description: 'Choose Voice (af_bella, af_heart, am_adam, am_michael)'
         required: true
         default: 'af_bella'
 
 jobs:
-  generate-audio:
+  build-tts:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repository
+    - name: Checkout Code
       uses: actions/checkout@v4
 
     - name: Set up Python 3.11
@@ -35,17 +35,17 @@ jobs:
         python -m pip install --upgrade pip
         pip install kokoro soundfile numpy torch
 
-    - name: Prepare Input Text
+    - name: Pass Script safely via Environment Variable
+      env:
+        RAW_TEXT: ${{ github.event.inputs.voiceover_text }}
       run: |
-        cat << 'EOF' > current_script.txt
-        ${{ github.event.inputs.voiceover_text }}
-        EOF
+        python -c "import os; open('current_script.txt', 'w', encoding='utf-8').write(os.environ['RAW_TEXT'])"
 
-    - name: Run Kokoro TTS Generation
+    - name: Run Kokoro TTS Script
       run: |
         python scripts/generate.py current_script.txt "${{ github.event.inputs.voice_name }}"
 
-    - name: Upload Audio Artifact
+    - name: Upload Audio Output
       uses: actions/upload-artifact@v4
       with:
         name: youtube-voiceover-wav
